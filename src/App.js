@@ -1,138 +1,240 @@
-import React, { Component } from 'react';
-import quizQuestions from './api/quizQuestions';
-import Quiz from './components/Quiz';
-import Result from './components/Result';
-import logo from './svg/logo.svg';
-import './App.css';
+import React, { useState } from 'react';
+import InputAnswer from './components/InputAnswer';
+import TextAnswer from './components/TextAnswer';
+import RadioAnswer from './components/RadioAnswer';
+import CheckAnswer from './components/CheckAnswer';
+import CircularProgressWithLabel from './components/CircularProgressWithLabel';
+import { MDBContainer, MDBRow, MDBCol, MDBCard, MDBCardBody, MDBBtn, MDBIcon, MDBModalFooter } from 'mdbreact';
 
-class App extends Component {
-  constructor(props) {
-    super(props);
+export default function App() {
+	const [progress, setProgress] = useState(0);
+	const [questions, setQuestions] = useState([
+		{
+			questionText: 'What\'s your name?',
+			type: 'input',
+			answer: '',
+		},
+		{
+			questionText: 'Enter a brief description of your working history.',
+			type: 'text',
+			answer: '',
+		},
+		{
+			questionText: 'What is the capital of France?',
+			type: 'radio',
+			answerOptions: [
+				{ answerText: 'New York', value: 1 },
+				{ answerText: 'London', value: 2 },
+				{ answerText: 'Paris', value: 3 },
+				{ answerText: 'Dublin', value: 4 },
+			],
+			answer: 0,
+		},
+		{
+			questionText: 'What are your major skills?',
+			type: 'multi',
+			answerOptions: [
+				{ answerText: 'React', name: "react" },
+				{ answerText: 'Vue', name: "vue" },
+				{ answerText: 'Angular', name: "angular" },
+				{ answerText: 'Ruby on Rails', name: "rails" },
+				{ answerText: 'Django', name: "django" },
+			],
+			answer: { react: false, vue: false, angular: false, rails: false, django: false },
+		},
+	]);
 
-    this.state = {
-      counter: 0,
-      questionId: 1,
-      question: '',
-      answerOptions: [],
-      answer: '',
-      answersCount: {},
-      result: ''
-    };
+	const [currentQuestion, setCurrentQuestion] = useState(0);
+	const [isSet, setIsSet] = useState(false);
+	const [isComplete, setIsComplete] = useState(false);
 
-    this.handleAnswerSelected = this.handleAnswerSelected.bind(this);
-  }
+	const handleInputAnswer = (param) => {
 
-  componentDidMount() {
-    const shuffledAnswerOptions = quizQuestions.map(question =>
-      this.shuffleArray(question.answers)
-    );
-    console.log("shuffledAnswerOptions: ", shuffledAnswerOptions);
-    this.setState({
-      question: quizQuestions[0].question,
-      answerOptions: shuffledAnswerOptions[0]
-    });
-  }
+		let newQuestions = [...questions];
+		let val = param.target.value;
+		newQuestions[currentQuestion].answer = val;
 
-  shuffleArray(array) {
-    var currentIndex = array.length,
-      temporaryValue,
-      randomIndex;
+		setQuestions(newQuestions);
 
-    // While there remain elements to shuffle...
-    while (0 !== currentIndex) {
-      // Pick a remaining element...
-      randomIndex = Math.floor(Math.random() * currentIndex);
-      currentIndex -= 1;
+		if (val) {
+			setIsSet(true);
+		} else {
+			setIsSet(false);
+		}
+	};
 
-      // And swap it with the current element.
-      temporaryValue = array[currentIndex];
-      array[currentIndex] = array[randomIndex];
-      array[randomIndex] = temporaryValue;
-    }
+	const handleTextAnswer = (param) => {
 
-    return array;
-  }
+		let newQuestions = [...questions];
+		let val = param.target.value;
+		newQuestions[currentQuestion].answer = val;
 
-  handleAnswerSelected(event) {
-    this.setUserAnswer(event.currentTarget.value);
+		setQuestions(newQuestions);
 
-    if (this.state.questionId < quizQuestions.length) {
-      setTimeout(() => this.setNextQuestion(), 300);
-    } else {
-      setTimeout(() => this.setResults(this.getResults()), 300);
-    }
-  }
+		if (val) {
+			setIsSet(true);
+		} else {
+			setIsSet(false);
+		}
+	};
 
-  setUserAnswer(answer) {
-    this.setState((state, props) => ({
-      answersCount: {
-        ...state.answersCount,
-        [answer]: (state.answersCount[answer] || 0) + 1
-      },
-      answer: answer
-    }));
+	const handleRadioAnswer = (event) => {
 
-    console.log("State: ", this.state);
-  }
+		let newQuestions = [...questions];
+		newQuestions[currentQuestion].answer = event.target.value;
 
-  setNextQuestion() {
-    const counter = this.state.counter + 1;
-    const questionId = this.state.questionId + 1;
+		setQuestions(newQuestions);
 
-    this.setState({
-      counter: counter,
-      questionId: questionId,
-      question: quizQuestions[counter].question,
-      answerOptions: quizQuestions[counter].answers,
-      answer: ''
-    });
-  }
+		let answer = newQuestions[currentQuestion].answer;
+		if (answer !== 0) {
+			setIsSet(true);
+		} else {
+			setIsSet(false);
+		}
+	};
 
-  getResults() {
-    const answersCount = this.state.answersCount;
-    const answersCountKeys = Object.keys(answersCount);
-    const answersCountValues = answersCountKeys.map(key => answersCount[key]);
-    const maxAnswerCount = Math.max.apply(null, answersCountValues);
+	const handleCheckAnswer = (event) => {
 
-    return answersCountKeys.filter(key => answersCount[key] === maxAnswerCount);
-  }
+		let newQuestions = [...questions];
+		newQuestions[currentQuestion].answer[event.target.name] = event.target.checked;
 
-  setResults(result) {
-    if (result.length === 1) {
-      this.setState({ result: result[0] });
-    } else {
-      this.setState({ result: 'Undetermined' });
-    }
-  }
+		setQuestions(newQuestions);
+	};
 
-  renderQuiz() {
-    return (
-      <Quiz
-        answer={this.state.answer}
-        answerOptions={this.state.answerOptions}
-        questionId={this.state.questionId}
-        question={this.state.question}
-        questionTotal={quizQuestions.length}
-        onAnswerSelected={this.handleAnswerSelected}
-      />
-    );
-  }
+	const handleNext = () => {
+		const nextQuestion = currentQuestion + 1;
+		setProgress(nextQuestion * 25);
+		if (nextQuestion < questions.length) {
+			setCurrentQuestion(nextQuestion);
+			let type = questions[nextQuestion].type;
+			if (type === "input" || type === "text") {
+				if (questions[nextQuestion].answer !== '') {
+					setIsSet(true);
+				} else {
+					setIsSet(false);
+				}
+			} else if (type === "radio") {
+				if (questions[nextQuestion].answer !== 0) {
+					setIsSet(true);
+				} else {
+					setIsSet(false);
+				}
+			} else {
+				setIsSet(true);
+			}
+		} else {
+		}
+	}
 
-  renderResult() {
-    return <Result quizResult={this.state.result} />;
-  }
+	const handlePrev = () => {
+		const prevQuestion = currentQuestion - 1;
+		setProgress(prevQuestion * 25);
+		if (prevQuestion >= 0) {
+			setCurrentQuestion(prevQuestion);
+			let type = questions[currentQuestion].type;
+			if (type === "input" || type === "text") {
+				if (questions[prevQuestion].answer !== '') {
+					setIsSet(true);
+				} else {
+					setIsSet(false);
+				}
+			} else if (type === "radio") {
+				if (questions[prevQuestion].answer !== 0) {
+					setIsSet(true);
+				} else {
+					setIsSet(false);
+				}
+			}
+		} else {
+		}
+	}
 
-  render() {
-    return (
-      <div className="App">
-        <div className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h2>React Quiz</h2>
-        </div>
-        {this.state.result ? this.renderResult() : this.renderQuiz()}
-      </div>
-    );
-  }
+	const handleComplete = () => {
+		setProgress(100);
+		setIsComplete(true);
+	}
+
+	return (
+		<MDBContainer>
+			<MDBRow>
+				<MDBCol className="margin-auto mt-3">
+					<MDBCard className="col-tb">
+						<MDBCardBody className="mx-4">
+							<div>
+								<h3 className="dark-grey-text mb-5 text-center">
+									<strong>{questions[currentQuestion].questionText}</strong>
+								</h3>
+							</div>
+							<CircularProgressWithLabel
+								progress={progress}
+								current={currentQuestion + 1}
+								total={questions.length}
+							/>
+							{
+								(questions[currentQuestion].type === "input") ?
+									<InputAnswer
+										question={questions[currentQuestion]}
+										onAnswer={handleInputAnswer}
+									/>
+									: (questions[currentQuestion].type === "text") ?
+										<TextAnswer
+											question={questions[currentQuestion]}
+											onAnswer={handleTextAnswer}
+										/>
+										: (questions[currentQuestion].type === "radio") ?
+											<RadioAnswer
+												question={questions[currentQuestion]}
+												onAnswer={handleRadioAnswer}
+											/>
+											: <CheckAnswer
+												question={questions[currentQuestion]}
+												onAnswer={handleCheckAnswer}
+											/>
+							}
+
+							{isSet && (currentQuestion === questions.length - 1) ?
+								<div className="text-center mb-3">
+									<MDBBtn
+										type="button"
+										gradient="blue"
+										rounded
+										className="btn-block z-depth-1a"
+										onClick={handleComplete}
+									>
+										Complete
+									</MDBBtn>
+								</div>
+								: isSet && (currentQuestion !== questions.length - 1) ?
+									<div className="text-center mb-3">
+										<MDBBtn
+											type="button"
+											gradient="blue"
+											rounded
+											className="btn-block z-depth-1a"
+											onClick={handleNext}
+										>
+											Next Question 
+											<MDBIcon className="ml-2" icon="arrow-right" />
+										</MDBBtn>
+									</div>
+									: ''
+							}
+						</MDBCardBody>
+						<MDBModalFooter className="mx-5 pt-3 mb-1">
+							{(currentQuestion !== 0 && !isComplete) ?
+								<p className="d-flex prev-button cursor-pointer" onClick={handlePrev}>
+									<MDBIcon icon="arrow-left" />
+								</p>
+								: ''
+							}
+
+							<p className="font-small grey-text d-flex quiz-number">
+								<span>Question {currentQuestion + 1}</span>/{questions.length}
+							</p>
+						</MDBModalFooter>
+					</MDBCard>
+				</MDBCol>
+			</MDBRow>
+		</MDBContainer>
+	);
 }
-
-export default App;
